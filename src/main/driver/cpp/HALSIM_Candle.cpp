@@ -3,6 +3,7 @@
 #include "hal/CAN.h"
 #include "mockdata/CanData.h"
 #include "cstring"
+#include "wpi/MemAlloc.h"
 
 #ifdef _WIN32
 #include "WindowsCANController.h"
@@ -108,5 +109,32 @@ extern "C"
         HALSIM_CancelCanSendMessageCallback(controller->sendMessageHandle);
 
         delete controller;
+    }
+
+    struct HALSIM_Candle_Device* HALSIM_Candle_GetDevices(int32_t* count) {
+    #ifdef _WIN32
+        auto devices = WindowsCANController::getDevices();
+        struct HALSIM_Candle_Device* retVal = static_cast<struct HALSIM_Candle_Device*>(wpi::safe_malloc(sizeof(HALSIM_Candle_Device) * devices.size()));
+        for (size_t i = 0; i < devices.size(); i++) {
+            std::string_view sv = devices[i];
+            retVal[i].deviceId = static_cast<char*>(wpi::safe_malloc(sv.size() + 1));
+            sv.copy(retVal[i].deviceId, sv.size());
+            retVal[i].deviceId[sv.size()] = '\0';
+        }
+        *count = devices.size();
+        return retVal;
+        #else
+        *count = 0;
+        return nullptr;
+        #endif
+    }
+
+    void HALSIM_Candle_FreeDevices(struct HALSIM_Candle_Device* devices, int32_t count) {
+        if (devices == nullptr) return;
+        for (int i = 0; i < count; i++) 
+        {
+            free(devices[i].deviceId);
+        }
+        free(devices);
     }
 }
