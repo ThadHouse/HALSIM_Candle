@@ -1,0 +1,5 @@
+JNI_OnLoad
+JNI_OnUnload
+Java_com_vendor_jni_VendorJNI_initialize
+HALSIM_Candle_Enable
+HALSIM_Candle_Clean

@@ -1,0 +1,102 @@
+
+plugins {
+  id 'c'
+  id 'cpp'
+  id 'java'
+  id 'edu.wpi.first.wpilib.repositories.WPILibRepositoriesPlugin' version '2020.2'
+  id 'edu.wpi.first.NativeUtils' version '2020.5.2'
+  id 'edu.wpi.first.GradleJni' version '0.10.1'
+  id 'edu.wpi.first.GradleVsCode' version '0.10.0'
+}
+
+repositories {
+  mavenCentral()
+}
+if (project.hasProperty('releaseMode')) {
+  wpilibRepositories.addAllReleaseRepositories(project)
+} else {
+  wpilibRepositories.addAllDevelopmentRepositories(project)
+}
+
+// Apply C++ configuration
+apply from: 'config.gradle'
+
+// Apply Java configuration
+dependencies {
+    implementation 'edu.wpi.first.wpiutil:wpiutil-java:2020.+'
+    implementation 'edu.wpi.first.hal:hal-java:2020.+'
+}
+
+// Set up exports properly
+nativeUtils {
+  privateExportsConfigs {
+    // Only export explicit symbols from driver library
+    HALSIM_SocketCAN {
+      exportsFile = project.file("src/main/driver/symbols.txt")
+      performStripAllSymbols = true
+    }
+  }
+}
+
+model {
+  components {
+    HALSIM_Candle(JniNativeLibrarySpec) {
+      enableCheckTask true
+      javaCompileTasks << compileJava
+      jniCrossCompileOptions << JniCrossCompileOptions(nativeUtils.wpi.platforms.roborio)
+      jniCrossCompileOptions << JniCrossCompileOptions(nativeUtils.wpi.platforms.raspbian)
+      jniCrossCompileOptions << JniCrossCompileOptions(nativeUtils.wpi.platforms.aarch64bionic)
+      sources {
+        cpp {
+          source {
+            srcDirs 'src/main/driver/cpp'
+            include '**/*.cpp'
+          }
+          exportedHeaders {
+            srcDirs 'src/main/driver/include'
+            srcDirs 'src/main/driver/privateinclude'
+          }
+        }
+      }
+
+      binaries.all {
+        if (it.targetPlatform.operatingSystem.windows) {
+          it.sources {
+            candleWindows(CSourceSet) {
+              source {
+                srcDirs 'src/main/driver/c'
+                include '**/*.c'
+              }
+              exportedHeaders {
+                srcDirs 'src/main/driver/include'
+                srcDirs 'src/main/driver/privateinclude'
+              }
+            }
+          }
+        }
+      }
+
+       nativeUtils.useRequiredLibrary(it, "driver_shared")
+    }
+    TestExe(NativeExecutableSpec) {
+      sources {
+        cpp {
+          source {
+            srcDirs 'src/main/exe/cpp'
+          }
+        }
+      }
+
+      binaries.all {
+        lib library: 'HALSIM_Candle', linkage: 'shared'
+        nativeUtils.useRequiredLibrary(it, 'driver_shared')
+      }
+    }
+  }
+}
+
+apply from: 'publish.gradle'
+
+wrapper {
+  gradleVersion '6.0'
+}
