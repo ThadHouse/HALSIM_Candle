@@ -5,6 +5,7 @@
 #include "wpi/mutex.h"
 #include <thread>
 #include <atomic>
+#include <vector>
 #include "candle.h"
 
 class WindowsCANController : public CANController

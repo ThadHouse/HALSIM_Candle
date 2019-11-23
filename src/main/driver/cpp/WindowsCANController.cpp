@@ -3,6 +3,7 @@
 
 #include "candle.h"
 #include <wpi/timestamp.h>
+#include <cstring>
 
 int WindowsCANController::start(string_view_type port, int baud)
 {
@@ -51,10 +52,11 @@ int WindowsCANController::start(string_view_type port, int baud)
         return -1;
     }
 
-    if (!candle_dev_open(handle)) {
-        candle_dev_free(handle);
-        return -1;
-    }
+	if (!candle_channel_set_bitrate(handle, 0, baud)) {
+		candle_dev_close(handle);
+		candle_dev_free(handle);
+		return -1;
+	}
 
     if (!candle_channel_start(handle, 0, CANDLE_MODE_NORMAL)) {
         candle_dev_close(handle);

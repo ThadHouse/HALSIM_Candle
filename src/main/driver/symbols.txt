@@ -3,3 +3,5 @@ JNI_OnUnload
 Java_com_vendor_jni_VendorJNI_initialize
 HALSIM_Candle_Enable
 HALSIM_Candle_Clean
+HALSIM_Candle_GetDevices
+HALSIM_Candle_FreeDevices

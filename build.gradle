@@ -31,7 +31,7 @@ dependencies {
 nativeUtils {
   privateExportsConfigs {
     // Only export explicit symbols from driver library
-    HALSIM_SocketCAN {
+    HALSIM_Candle {
       exportsFile = project.file("src/main/driver/symbols.txt")
       performStripAllSymbols = true
     }
